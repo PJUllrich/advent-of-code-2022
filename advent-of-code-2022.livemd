@@ -1,0 +1,273 @@
+# Advent of Code 2022
+
+```elixir
+Mix.install([
+  {:kino_aoc, github: "ljgago/kino_aoc"}
+])
+```
+
+## Inputs
+
+<!-- livebook:{"attrs":{"day":"5","session_secret":"AOC_SESSION","variable":"day_5_raw_input","year":"2022"},"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+
+```elixir
+{:ok, day_5_raw_input} = KinoAOC.download_puzzle("2022", "5", System.fetch_env!("LB_AOC_SESSION"))
+```
+
+## Day 5
+
+```elixir
+day_5_input =
+  day_5_raw_input
+  |> String.split("\n")
+  |> Enum.reject(&(&1 == ""))
+
+{moves, stacks} = Enum.split_with(day_5_input, &String.starts_with?(&1, "move"))
+{_ids, stacks} = List.pop_at(stacks, -1)
+```
+
+```elixir
+cols =
+  stacks
+  |> Enum.map(fn line ->
+    line |> String.to_charlist() |> Enum.chunk_every(4) |> Enum.map(&Enum.at(&1, 1))
+  end)
+  |> Enum.zip_with(& &1)
+  |> Enum.map(fn col -> Enum.reject(col, &(&1 == ?\s)) end)
+
+extract_nums = fn str ->
+  Regex.scan(~r/\d+/, str) |> List.flatten() |> Enum.map(&String.to_integer/1)
+end
+```
+
+```elixir
+# Part One
+Enum.reduce(moves, cols, fn move, cols ->
+  [n1, n2, n3] = extract_nums.(move)
+  col_1 = Enum.at(cols, n2 - 1)
+  col_2 = Enum.at(cols, n3 - 1)
+
+  {crates, col_1} = Enum.split(col_1, n1)
+  col_2 = Enum.reverse(crates) ++ col_2
+  cols |> List.replace_at(n2 - 1, col_1) |> List.replace_at(n3 - 1, col_2)
+end)
+```
+
+```elixir
+# Part Two
+Enum.reduce(moves, cols, fn move, cols ->
+  [n1, n2, n3] = extract_nums.(move)
+  col_1 = Enum.at(cols, n2 - 1)
+  col_2 = Enum.at(cols, n3 - 1)
+
+  {crates, col_1} = Enum.split(col_1, n1)
+  col_2 = crates ++ col_2
+  cols |> List.replace_at(n2 - 1, col_1) |> List.replace_at(n3 - 1, col_2)
+end)
+```
+
+## Day 4
+
+```elixir
+day_4_input =
+  day_4_raw_input
+  |> String.split("\n")
+  |> Enum.reject(&(&1 == ""))
+  |> Enum.map(&String.split(&1, ","))
+  |> Enum.map(fn [left, right] ->
+    [l1, l2] = String.split(left, "-") |> Enum.map(&String.to_integer/1)
+    [r1, r2] = String.split(right, "-") |> Enum.map(&String.to_integer/1)
+    {l1, l2, r1, r2}
+  end)
+```
+
+```elixir
+# Part One
+contains? = fn {l1, l2, r1, r2} ->
+  (r1 >= l1 && r2 <= l2) || (l1 >= r1 && l2 <= r2)
+end
+
+Enum.count(day_4_input, &contains?.(&1))
+```
+
+```elixir
+# Part Two
+overlap? = fn {l1, l2, r1, r2} ->
+  (l2 >= r1 && l2 <= r2) || (r2 >= l1 && r2 <= l2)
+end
+
+Enum.count(day_4_input, &overlap?.(&1))
+```
+
+## Day 3
+
+```elixir
+day_3_input = String.split(day_3_raw_input, "\n") |> Enum.reject(fn line -> line == "" end)
+```
+
+```elixir
+str_to_mapset = fn str ->
+  str |> String.graphemes() |> MapSet.new()
+end
+
+priority = fn char ->
+  <<num::utf8>> = char
+  if num > 90, do: num - 96, else: num - 38
+end
+```
+
+```elixir
+# Part One
+compartments =
+  Enum.map(day_3_input, fn rucksack ->
+    half = String.length(rucksack) |> then(&(&1 / 2)) |> round()
+    {left, right} = String.split_at(rucksack, half)
+    [str_to_mapset.(left), str_to_mapset.(right)]
+  end)
+
+shared_items =
+  Enum.map(compartments, fn [left, right] ->
+    MapSet.intersection(left, right) |> MapSet.to_list() |> hd()
+  end)
+
+priorities = Enum.map(shared_items, &priority.(&1)) |> Enum.sum()
+```
+
+```elixir
+# Part Two
+groups = Enum.chunk_every(day_3_input, 3)
+
+priorities =
+  Enum.map(groups, fn group ->
+    group
+    |> Enum.map(&str_to_mapset.(&1))
+    |> Enum.scan(&MapSet.intersection/2)
+    |> List.last()
+    |> MapSet.to_list()
+    |> hd()
+    |> then(fn item -> priority.(item) end)
+  end)
+
+Enum.sum(priorities)
+```
+
+```elixir
+<<p::utf8>> = "z"
+IO.inspect(p - 96)
+
+<<b::utf8>> = "Z"
+IO.inspect(b - 38)
+
+"A" > 90
+```
+
+## Day 2
+
+```elixir
+day_2_input =
+  day_2_raw_input
+  |> String.split("\n")
+  |> Enum.reject(fn round -> round == "" end)
+  |> Enum.map(&String.split(&1, " "))
+```
+
+```elixir
+# Opponent - Rock: A, Paper: B, Scissors: C
+# Myself   - Rock: X, Paper: Y, Scissors: Z
+# Outcomes - Loss: X, Draw: Y, Win: Z
+outcomes = %{
+  ["C", "X"] => "Z",
+  ["B", "Z"] => "Z",
+  ["A", "Y"] => "Z",
+  ["A", "X"] => "Y",
+  ["B", "Y"] => "Y",
+  ["C", "Z"] => "Y",
+  ["A", "Z"] => "X",
+  ["B", "X"] => "X",
+  ["C", "Y"] => "X"
+}
+
+moves =
+  outcomes
+  |> Enum.map(fn {[their_move, my_move], outcome} -> {[their_move, outcome], my_move} end)
+  |> Map.new()
+
+shape_scores = %{"X" => 1, "Y" => 2, "Z" => 3}
+outcome_scores = %{"X" => 0, "Y" => 3, "Z" => 6}
+
+outcome = fn round -> Map.get(outcomes, round) end
+```
+
+```elixir
+# Part One
+Enum.reduce(day_2_input, 0, fn [_, my_shape] = round, score ->
+  shape_score = Map.get(shape_scores, my_shape)
+
+  outcome = outcome.(round)
+  outcome_score = Map.get(outcome_scores, outcome)
+
+  score + shape_score + outcome_score
+end)
+```
+
+```elixir
+# Part Two
+Enum.reduce(day_2_input, 0, fn [_their_move, round_outcome] = round, score ->
+  my_shape = Map.get(moves, round)
+  shape_score = Map.get(shape_scores, my_shape)
+  outcome_score = Map.get(outcome_scores, round_outcome)
+
+  score + shape_score + outcome_score
+end)
+```
+
+## Day 1
+
+```elixir
+day_1_input =
+  day_1_raw_input
+  |> String.split("\n")
+  |> Enum.map(fn line ->
+    case Integer.parse(line) do
+      {num, ""} -> num
+      :error -> nil
+    end
+  end)
+```
+
+```elixir
+# Part One
+elves =
+  Enum.reduce(day_1_input, {1, 0, 1, 0}, fn calorie, {idx, idx_cal_sum, max_idx, max_cal_sum} ->
+    cond do
+      calorie == nil ->
+        if idx_cal_sum > max_cal_sum do
+          {idx + 1, 0, idx, idx_cal_sum}
+        else
+          {idx + 1, 0, max_idx, max_cal_sum}
+        end
+
+      calorie ->
+        {idx, idx_cal_sum + calorie, max_idx, max_cal_sum}
+    end
+  end)
+```
+
+```elixir
+# Part Two
+{_idx, _sum, top_3} =
+  Enum.reduce(day_1_input, {1, 0, [{1, 0}]}, fn calorie, {idx, idx_cal_sum, top_3} ->
+    cond do
+      calorie == nil ->
+        new_top_3 =
+          [{idx, idx_cal_sum} | top_3] |> Enum.sort_by(&elem(&1, 1), :desc) |> Enum.take(3)
+
+        {idx + 1, 0, new_top_3}
+
+      calorie ->
+        {idx, idx_cal_sum + calorie, top_3}
+    end
+  end)
+
+top_3 |> Enum.map(&elem(&1, 1)) |> Enum.sum()
+```

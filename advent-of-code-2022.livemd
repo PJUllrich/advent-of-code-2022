@@ -8,10 +8,83 @@ Mix.install([
 
 ## Inputs
 
-<!-- livebook:{"attrs":{"day":"6","session_secret":"AOC_SESSION","variable":"day_6_raw_input","year":"2022"},"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+<!-- livebook:{"attrs":{"day":"7","session_secret":"AOC_SESSION","variable":"day_7_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
 
 ```elixir
-{:ok, day_6_raw_input} = KinoAOC.download_puzzle("2022", "6", System.fetch_env!("LB_AOC_SESSION"))
+{:ok, day_7_raw_input} = KinoAOC.download_puzzle("2022", "7", System.fetch_env!("LB_AOC_SESSION"))
+```
+
+## Day 7
+
+```elixir
+day_7_input = String.split(day_7_raw_input, "\n", trim: true)
+```
+
+```elixir
+defmodule Helpers do
+  def add_to_path(name, path), do: path ++ [name]
+
+  def add_size(_size, [], sizes), do: sizes
+
+  def add_size(size, path, sizes) do
+    str_path = path |> Enum.reverse() |> Enum.join("/")
+    sizes = Map.update(sizes, str_path, size, &(&1 + size))
+    [_ | path] = path
+    add_size(size, path, sizes)
+  end
+end
+
+acc = %{path: ["."], sizes: %{}}
+
+result =
+  Enum.reduce(day_7_input, acc, fn arg, %{path: path, sizes: sizes} = acc ->
+    case arg do
+      "$ cd /" ->
+        %{acc | path: ["."]}
+
+      "$ cd .." ->
+        [_ | rest] = path
+        %{acc | path: rest}
+
+      "$ cd " <> name ->
+        %{acc | path: [name | path]}
+
+      "$ ls" ->
+        acc
+
+      "dir " <> _name ->
+        acc
+
+      file ->
+        [size, _name] = String.split(file, " ")
+        size = String.to_integer(size)
+        sizes = Helpers.add_size(size, path, sizes)
+        %{acc | sizes: sizes}
+    end
+  end)
+
+sizes = Enum.map(result.sizes, fn {_name, size} -> size end)
+```
+
+```elixir
+# Part One
+sizes
+|> Enum.filter(&(&1 <= 100_000))
+|> Enum.sum()
+```
+
+```elixir
+# Part Two
+total_space = 70_000_000
+threshold = 30_000_000
+
+used_space = Enum.max(sizes)
+unused_space = total_space - used_space
+delta = threshold - unused_space
+
+sizes
+|> Enum.filter(&(&1 >= delta))
+|> Enum.min_by(&(&1 - delta))
 ```
 
 ## Day 6

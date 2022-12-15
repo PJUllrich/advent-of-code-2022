@@ -8,10 +8,76 @@ Mix.install([
 
 ## Inputs
 
-<!-- livebook:{"attrs":{"day":"9","session_secret":"AOC_SESSION","variable":"day_9_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+<!-- livebook:{"attrs":{"day":"10","session_secret":"AOC_SESSION","variable":"day_10_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
 
 ```elixir
-{:ok, day_9_raw_input} = KinoAOC.download_puzzle("2022", "9", System.fetch_env!("LB_AOC_SESSION"))
+{:ok, day_10_raw_input} =
+  KinoAOC.download_puzzle("2022", "10", System.fetch_env!("LB_AOC_SESSION"))
+```
+
+## Day 10
+
+```elixir
+# Setup
+commands = String.split(day_10_raw_input, "\n", trim: true)
+```
+
+```elixir
+# Part One
+maybe_add_total = fn x, total, cycle ->
+  if cycle in [20, 60, 100, 140, 180, 220] do
+    total + cycle * x
+  else
+    total
+  end
+end
+
+Enum.reduce(commands, {1, 1, 0}, fn cmd, {x, cycle, total} ->
+  case cmd do
+    "noop" ->
+      total = maybe_add_total.(x, total, cycle + 1)
+      {x, cycle + 1, total}
+
+    "addx " <> num ->
+      total = maybe_add_total.(x, total, cycle + 1)
+      new_x = x + String.to_integer(num)
+      total = maybe_add_total.(new_x, total, cycle + 2)
+      {new_x, cycle + 2, total}
+  end
+end)
+```
+
+```elixir
+# Part Two
+add_pixel = fn sprite_mid, cycle, pixels ->
+  y = div(cycle, 40)
+  x = rem(cycle, 40)
+  pixel = if abs(sprite_mid - x) <= 1, do: "#", else: " "
+  Map.put(pixels, {x, y}, pixel)
+end
+
+{_x, _cycle, pixels} =
+  Enum.reduce(commands, {2, 1, %{}}, fn cmd, {sprite_mid, cycle, pixels} ->
+    case cmd do
+      "noop" ->
+        pixels = add_pixel.(sprite_mid, cycle, pixels)
+        {sprite_mid, cycle + 1, pixels}
+
+      "addx " <> num ->
+        pixels = add_pixel.(sprite_mid, cycle, pixels)
+        pixels = add_pixel.(sprite_mid, cycle + 1, pixels)
+        sprite_mid = sprite_mid + String.to_integer(num)
+        {sprite_mid, cycle + 2, pixels}
+    end
+  end)
+
+for y <- 0..5 do
+  for x <- 1..39 do
+    Map.get(pixels, {x, y})
+  end
+  |> Enum.join()
+end
+|> Enum.each(&IO.puts/1)
 ```
 
 ## Day 9

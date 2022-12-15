@@ -8,10 +8,68 @@ Mix.install([
 
 ## Inputs
 
-<!-- livebook:{"attrs":{"day":"7","session_secret":"AOC_SESSION","variable":"day_7_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+<!-- livebook:{"attrs":{"day":"8","session_secret":"AOC_SESSION","variable":"day_8_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
 
 ```elixir
-{:ok, day_7_raw_input} = KinoAOC.download_puzzle("2022", "7", System.fetch_env!("LB_AOC_SESSION"))
+{:ok, day_8_raw_input} = KinoAOC.download_puzzle("2022", "8", System.fetch_env!("LB_AOC_SESSION"))
+```
+
+## Day 8
+
+```elixir
+grid =
+  day_8_raw_input
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn line -> String.split(line, "", trim: true) end)
+  |> Enum.map(fn row -> Enum.map(row, &String.to_integer(&1)) end)
+
+grid_map =
+  grid
+  |> Enum.with_index(1)
+  |> Enum.map(fn {row, y_idx} ->
+    row |> Enum.with_index(1) |> Enum.map(fn {val, x_idx} -> {{x_idx, y_idx}, val} end)
+  end)
+  |> List.flatten()
+  |> Map.new()
+
+dim_x = length(hd(grid))
+dim_y = length(grid)
+```
+
+```elixir
+# Part One
+Enum.count(grid_map, fn {{x, y}, val} ->
+  left = Enum.all?(1..(x - 1)//1, fn i -> Map.get(grid_map, {i, y}) < val end)
+  right = Enum.all?((x + 1)..dim_x//1, fn i -> Map.get(grid_map, {i, y}) < val end)
+  up = Enum.all?(1..(y - 1)//1, fn i -> Map.get(grid_map, {x, i}) < val end)
+  down = Enum.all?((y + 1)..dim_y//1, fn i -> Map.get(grid_map, {x, i}) < val end)
+  left || right || up || down
+end)
+```
+
+```elixir
+# Part Two
+check = fn x, y, val, counter, grid_map ->
+  tree = Map.get(grid_map, {x, y})
+
+  case tree < val do
+    true -> {:cont, counter + 1}
+    false -> {:halt, counter + 1}
+  end
+end
+
+calc_scenic_score = fn {{x, y}, val}, grid_map ->
+  left = Enum.reduce_while((x - 1)..1//-1, 0, fn i, c -> check.(i, y, val, c, grid_map) end)
+  right = Enum.reduce_while((x + 1)..dim_x//1, 0, fn i, c -> check.(i, y, val, c, grid_map) end)
+  up = Enum.reduce_while((y - 1)..1//-1, 0, fn i, c -> check.(x, i, val, c, grid_map) end)
+  down = Enum.reduce_while((y + 1)..dim_y//1, 0, fn i, c -> check.(x, i, val, c, grid_map) end)
+  left * right * up * down
+end
+
+grid_map
+|> Enum.map(fn tree -> calc_scenic_score.(tree, grid_map) end)
+|> Enum.sort(:desc)
+|> hd()
 ```
 
 ## Day 7

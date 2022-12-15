@@ -16,6 +16,74 @@ Mix.install([
 
 ## Day 9
 
+```elixir
+# Setup
+parse = fn move ->
+  [direction, count] = String.split(move, " ")
+  count = String.to_integer(count)
+  List.duplicate(direction, count)
+end
+
+moves =
+  day_9_raw_input
+  |> String.split("\n", trim: true)
+  |> Enum.map(&parse.(&1))
+  |> List.flatten()
+
+move_h = fn move, {h_x, h_y} ->
+  case move do
+    "R" -> {h_x + 1, h_y}
+    "L" -> {h_x - 1, h_y}
+    "U" -> {h_x, h_y + 1}
+    "D" -> {h_x, h_y - 1}
+  end
+end
+
+sign = fn
+  num when num < 0 -> -1
+  num when num > 0 -> 1
+  _num -> 0
+end
+
+maybe_move_t = fn {h_x, h_y}, {t_x, t_y} ->
+  diff_x = h_x - t_x
+  diff_y = h_y - t_y
+
+  if abs(diff_x) > 1 || abs(diff_y) > 1 do
+    {t_x + sign.(diff_x), t_y + sign.(diff_y)}
+  else
+    {t_x, t_y}
+  end
+end
+
+run = fn moves, knot_count ->
+  knots = List.duplicate({0, 0}, knot_count)
+
+  [_knots, visited] =
+    Enum.reduce(moves, [knots, %{}], fn move, [[h | rest], visited] ->
+      h_new = move_h.(move, h)
+      knots = [h_new | rest] |> Enum.scan(fn k2, k1 -> maybe_move_t.(k1, k2) end)
+
+      t_new = List.last(knots)
+      visited = Map.put(visited, t_new, true)
+
+      [knots, visited]
+    end)
+
+  map_size(visited)
+end
+```
+
+```elixir
+# Part One
+run.(moves, 2)
+```
+
+```elixir
+# Part Two
+run.(moves, 10)
+```
+
 ## Day 8
 
 ```elixir

@@ -8,15 +8,18 @@ Mix.install([
 
 ## Inputs
 
-<!-- livebook:{"attrs":{"day":"8","session_secret":"AOC_SESSION","variable":"day_8_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+<!-- livebook:{"attrs":{"day":"9","session_secret":"AOC_SESSION","variable":"day_9_raw_input","year":"2022"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
 
 ```elixir
-{:ok, day_8_raw_input} = KinoAOC.download_puzzle("2022", "8", System.fetch_env!("LB_AOC_SESSION"))
+{:ok, day_9_raw_input} = KinoAOC.download_puzzle("2022", "9", System.fetch_env!("LB_AOC_SESSION"))
 ```
+
+## Day 9
 
 ## Day 8
 
 ```elixir
+# Setup
 grid =
   day_8_raw_input
   |> String.split("\n", trim: true)
@@ -75,10 +78,7 @@ grid_map
 ## Day 7
 
 ```elixir
-day_7_input = String.split(day_7_raw_input, "\n", trim: true)
-```
-
-```elixir
+# Setup
 defmodule Helpers do
   def add_to_path(name, path), do: path ++ [name]
 
@@ -91,6 +91,8 @@ defmodule Helpers do
     add_size(size, path, sizes)
   end
 end
+
+day_7_input = String.split(day_7_raw_input, "\n", trim: true)
 
 acc = %{path: ["."], sizes: %{}}
 
@@ -148,6 +150,7 @@ sizes
 ## Day 6
 
 ```elixir
+# Setup
 all_different? = fn list, expected_num ->
   list |> MapSet.new() |> MapSet.size() == expected_num
 end
@@ -176,13 +179,10 @@ find_marker.(day_6_raw_input, 4)
 find_marker.(day_6_raw_input, 14)
 ```
 
-```elixir
-
-```
-
 ## Day 5
 
 ```elixir
+# Setup
 day_5_input =
   day_5_raw_input
   |> String.split("\n")
@@ -190,9 +190,7 @@ day_5_input =
 
 {moves, stacks} = Enum.split_with(day_5_input, &String.starts_with?(&1, "move"))
 {_ids, stacks} = List.pop_at(stacks, -1)
-```
 
-```elixir
 cols =
   stacks
   |> Enum.map(fn line ->
@@ -235,6 +233,7 @@ end)
 ## Day 4
 
 ```elixir
+# Setup
 day_4_input =
   day_4_raw_input
   |> String.split("\n")
@@ -268,10 +267,9 @@ Enum.count(day_4_input, &overlap?.(&1))
 ## Day 3
 
 ```elixir
+# Setup
 day_3_input = String.split(day_3_raw_input, "\n") |> Enum.reject(fn line -> line == "" end)
-```
 
-```elixir
 str_to_mapset = fn str ->
   str |> String.graphemes() |> MapSet.new()
 end
@@ -317,27 +315,16 @@ priorities =
 Enum.sum(priorities)
 ```
 
-```elixir
-<<p::utf8>> = "z"
-IO.inspect(p - 96)
-
-<<b::utf8>> = "Z"
-IO.inspect(b - 38)
-
-"A" > 90
-```
-
 ## Day 2
 
 ```elixir
+# Setup
 day_2_input =
   day_2_raw_input
   |> String.split("\n")
   |> Enum.reject(fn round -> round == "" end)
   |> Enum.map(&String.split(&1, " "))
-```
 
-```elixir
 # Opponent - Rock: A, Paper: B, Scissors: C
 # Myself   - Rock: X, Paper: Y, Scissors: Z
 # Outcomes - Loss: X, Draw: Y, Win: Z
@@ -390,6 +377,7 @@ end)
 ## Day 1
 
 ```elixir
+# Setup
 day_1_input =
   day_1_raw_input
   |> String.split("\n")
